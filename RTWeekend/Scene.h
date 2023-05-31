@@ -17,9 +17,7 @@ using std::make_unique;
 class Scene
 {
 public:
-	Scene()
-	{
-	}
+	Scene() = default;
 
 	void Add(shared_ptr<Geometry> geometry)
 	{
@@ -46,8 +44,7 @@ public:
 			return false;
 
 		// Hit calls update the tmax with the closest hit found during traversal.
-		RayDesc tempRayDesc = rayDesc;	
-		tempRayDesc.ray.CacheHitHelpers();
+		RayDesc tempRayDesc = rayDesc;
 
 		return root->Hit(tempRayDesc, hitDesc);
 #else
