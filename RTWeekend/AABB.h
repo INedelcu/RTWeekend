@@ -3,8 +3,6 @@
 
 #include "Ray.h"
 
-#include <emmintrin.h>
-
 class AABB
 {
 public:

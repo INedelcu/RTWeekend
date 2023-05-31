@@ -25,7 +25,7 @@ class Geometry
 {
 public:
 	virtual bool Hit(const RayDesc& rayDesc, HitDesc& hitDesc) const = 0;
-	virtual bool GetBoundingBox(AABB& aabb) const = 0;
+	virtual void GetBoundingBox(AABB& aabb) const = 0;
 };
 
 #endif // GEOMETRY_H
