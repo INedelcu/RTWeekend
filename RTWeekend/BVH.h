@@ -9,11 +9,9 @@ inline bool BoxCompare(const shared_ptr<Geometry> a, const shared_ptr<Geometry> 
 	AABB boxA;
 	AABB boxB;
 
-	if (!a->GetBoundingBox(boxA) || !b->GetBoundingBox(boxB))
-	{
-
-	}
-
+	a->GetBoundingBox(boxA);
+	b->GetBoundingBox(boxB);
+	
 	float* minAvec = &boxA.min.x;
 	float* minBvec = &boxB.min.x;
 
@@ -35,6 +33,8 @@ bool BoxCompareZ(const shared_ptr<Geometry> a, const shared_ptr<Geometry> b)
 	return BoxCompare(a, b, 2);
 }
 
+static int s_BVHNodeCount = 0;
+
 class BVHNode
 {
 public:
@@ -47,11 +47,13 @@ public:
 	inline int RandomInt(int min, int max) 
 	{
 		// Returns a random integer in [min,max].
-		return static_cast<int>(RandomFloat(min, max + 1));
+		return static_cast<int>(RandomFloat((float)min, (float)(max + 1)));
 	}
 
 	BVHNode(std::vector<shared_ptr<Geometry>>& geometries, size_t start, size_t end)
 	{
+		s_BVHNodeCount++;
+
 		if (geometries.size() == 0)
 			return;
 
@@ -126,7 +128,12 @@ public:
 		data.aabb = boxLeft;
 	}
 
-	bool Hit(RayDesc& rayDesc, HitDesc& hitDesc) const
+	~BVHNode()
+	{
+		s_BVHNodeCount--;
+	}
+
+	inline bool Hit(RayDesc& rayDesc, HitDesc& hitDesc) const
 	{
 		if (data.aabb.Hit(rayDesc))
 		{
@@ -150,6 +157,18 @@ public:
 		}
 		else
 			return false;
+	}
+
+	inline void Clear()
+	{
+		if (left)
+			left->Clear();
+
+		if (right)
+			right->Clear();
+
+		left.reset();
+		right.reset();
 	}
 
 public:

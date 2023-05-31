@@ -94,10 +94,12 @@ public:
 	float y;
 	float z;
 
-	static const Vector3f one;
-	static const Vector3f zero;
-	static const Vector3f plusInf;
-	static const Vector3f minusInf;
+	static const Vector3f One;
+	static const Vector3f Zero;
+	static const Vector3f Half;
+	static const Vector3f MinusOne;
+	static const Vector3f PlusInf;
+	static const Vector3f MinusInf;
 };
 
 using Color3f = Vector3f;

@@ -184,7 +184,6 @@ void TraceRay(const Scene& scene, const RayDesc& rayDesc, RayPayload& payload)
 	g_RayCount++;
 
 	HitDesc hitDesc;
-
 	hitDesc.t = rayDesc.tmax;
 
 	if (scene.Hit(rayDesc, hitDesc))
@@ -201,7 +200,7 @@ void RayGenerationShader(int width, int height, int i, int j)
 {
 	Color3f pixelColor(0, 0, 0);
 
-	const uint32_t samplesPerPixel = 32;
+	const uint32_t samplesPerPixel = 512;
 
 	for (uint32_t s = 0; s < samplesPerPixel; s++)
 	{
@@ -231,12 +230,6 @@ int main()
 {
 	const int imageWidth = 400;
 	const int imageHeight = 300;
-
-	//shared_ptr<Lambertian> groundMaterial = make_shared<Lambertian>(Color3f(0.5f, 0.5f, 0.5f));
-	//scene.Add(make_shared<Sphere>(groundMaterial, Vector3f(0, 0, -1), 1.0f));
-
-	//shared_ptr<Lambertian> groundMaterial1 = make_shared<Lambertian>(Color3f(1.0f, 0.0f, 0.0f));
-	//scene.Add(make_shared<Sphere>(groundMaterial1, Vector3f(0, 0, -2), 1.0f));
 	
 	shared_ptr<Lambertian> groundMaterial = make_shared<Lambertian>(Color3f(0.5f, 0.5f, 0.5f));
 	scene.Add(make_shared<Sphere>(groundMaterial, Vector3f(0, -1000, 0), 1000.0f));
@@ -281,17 +274,16 @@ int main()
 	shared_ptr<Dielectric> material1 = make_shared<Dielectric>(1.5f);
 	scene.Add(make_shared<Sphere>(material1, Vector3f(0, 1, 0), 1.0f));
 
-	shared_ptr<Metal> material3 = make_shared<Metal>(Color3f(0.7f, 0.6f, 0.5f), 0.0f);
-	scene.Add(make_shared<Sphere>(material3, Vector3f(4, 1, 0), 1.0f));
-	
 	shared_ptr<Lambertian> material2 = make_shared<Lambertian>(Vector3f(0.4f, 0.2f, 0.1f));
 	scene.Add(make_shared<Sphere>(material2, Vector3f(-4, 1, 0), 1.0f));
 
+	shared_ptr<Metal> material3 = make_shared<Metal>(Color3f(0.7f, 0.6f, 0.5f), 0.0f);
+	scene.Add(make_shared<Sphere>(material3, Vector3f(4, 1, 0), 1.0f));
+	
 	scene.BuildAccelerationStructure();
 
 	float vFov = 20.0f;
 	Vector3f lookFrom(13, 2, 3);
-	//Vector3f lookFrom(0, 0, 8);
 	Vector3f lookAt(0, 0, 0);
 	float aspectRatio = float(imageWidth) / float(imageHeight);
 	float aperture = 0.1f;
@@ -328,7 +320,7 @@ int main()
 		float deltaT = (float)(end - start) / CLOCKS_PER_SEC;
 		uint64_t rayCount = rayCountEnd - rayCountStart;
 
-		printf("\rScanlines remaining: %d - Path tracing at: %.2f MRays/sec.", imageHeight - j - 1, (float(rayCount) / 1000000.0f) / deltaT);
+		printf("\rScanlines remaining: %d - Path tracing at: %.2f MRays/sec.  ", imageHeight - j - 1, (float(rayCount) / 1000000.0f) / deltaT);
 	}
 
 	clock_t t1 = clock();

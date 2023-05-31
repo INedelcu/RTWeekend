@@ -12,6 +12,8 @@ using std::make_shared;
 using std::unique_ptr;
 using std::make_unique;
 
+#define USE_BVH 1
+
 class Scene
 {
 public:
@@ -26,13 +28,19 @@ public:
 
 	void Clear()
 	{
+#if USE_BVH
+		if (root)
+		{
+			root->Clear();
+			root.reset();
+		}
+#endif
+
 		geometries.clear();
 	}
 
 	bool Hit(const RayDesc& rayDesc, HitDesc& hitDesc) const
-	{
-#define USE_BVH 1
-		
+	{		
 #if USE_BVH
 		if (geometries.empty())
 			return false;
@@ -61,11 +69,15 @@ public:
 
 	void BuildAccelerationStructure()
 	{
+#if USE_BVH
 		root = make_unique<BVHNode>(geometries, 0, geometries.size());
+#endif
 	}
 
 public:
+#if USE_BVH
 	unique_ptr<BVHNode>					root;
+#endif
 	std::vector<shared_ptr<Geometry>>	geometries;
 };
 
