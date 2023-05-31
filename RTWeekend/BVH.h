@@ -98,30 +98,25 @@ public:
 		}
 
 
-		AABB boxLeft, boxRight;
+		AABB boxLeft;
+		AABB boxRight;
 
-		if (left)
+		if (left->data.geometry)
 		{
-			if (left->data.geometry)
-			{
-				left->data.geometry->GetBoundingBox(boxLeft);
-			}
-			else
-			{
-				boxLeft = left->data.aabb;
-			}
+			left->data.geometry->GetBoundingBox(boxLeft);
+		}
+		else
+		{
+			boxLeft = left->data.aabb;
 		}
 
-		if (right)
+		if (right->data.geometry)
 		{
-			if (right->data.geometry)
-			{
-				right->data.geometry->GetBoundingBox(boxRight);
-			}
-			else
-			{
-				boxRight = right->data.aabb;
-			}
+			right->data.geometry->GetBoundingBox(boxRight);
+		}
+		else
+		{
+			boxRight = right->data.aabb;
 		}
 		
 		boxLeft.Encapsulate(boxRight);
