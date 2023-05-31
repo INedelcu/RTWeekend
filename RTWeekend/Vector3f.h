@@ -3,6 +3,9 @@
 
 #include <math.h>
 
+#define FMIN(a, b) ((a < b) ? (a) : (b))
+#define FMAX(a, b) ((a > b) ? (a) : (b))
+
 class Vector3f
 {
 public:
@@ -90,6 +93,11 @@ public:
 	float x;
 	float y;
 	float z;
+
+	static const Vector3f one;
+	static const Vector3f zero;
+	static const Vector3f plusInf;
+	static const Vector3f minusInf;
 };
 
 using Color3f = Vector3f;
@@ -124,6 +132,11 @@ inline Vector3f operator/(const Vector3f& v, float t)
 	return (1 / t) * v;
 }
 
+inline Vector3f operator/(float t, const Vector3f& v)
+{
+	return Vector3f(t / v.x, t / v.y, t / v.z);
+}
+
 inline float Dot(const Vector3f& a, const Vector3f& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
@@ -143,13 +156,34 @@ inline Vector3f Refract(const Vector3f& i, const Vector3f& n, float iorRatio)
 {
 	float cosTheta = -Dot(i, n);
 	Vector3f tPerp = iorRatio * (i + cosTheta * n);
-	Vector3f rParallel = -sqrtf(fabs(1 - tPerp.LengthSquared())) * n;
+	Vector3f rParallel = -sqrtf(fabsf(1 - tPerp.LengthSquared())) * n;
 	return tPerp + rParallel;
+}
+
+inline Vector3f Min(const Vector3f& a, const Vector3f& b)
+{
+	return Vector3f(FMIN(a.x, b.x), FMIN(a.y, b.y), FMIN(a.z, b.z));
+}
+
+inline Vector3f Max(const Vector3f& a, const Vector3f& b)
+{
+	return Vector3f(FMAX(a.x, b.x), FMAX(a.y, b.y), FMAX(a.z, b.z));
+}
+
+inline float MinComponent(const Vector3f& a)
+{
+	return FMIN(a.x, FMIN(a.y, a.z));
+}
+
+inline float MaxComponent(const Vector3f& a)
+{
+	return FMAX(a.x, FMAX(a.y, a.z));
 }
 
 inline Vector3f Normalize(const Vector3f& v)
 {
 	return v / v.Length();
 }
+
 
 #endif

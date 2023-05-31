@@ -49,6 +49,13 @@ public:
 		return true;
 	}
 
+	virtual bool GetBoundingBox(AABB& aabb) const override
+	{
+		aabb.min = center - Vector3f(radius, radius, radius);
+		aabb.max = center + Vector3f(radius, radius, radius);
+		return true;
+	}
+
 public:
 	Vector3f center;
 	float radius;

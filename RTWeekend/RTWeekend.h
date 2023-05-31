@@ -15,7 +15,9 @@
 #include "Vector3f.h"
 
 using std::shared_ptr;
+using std::unique_ptr;
 using std::make_shared;
+using std::make_unique;
 
 const float infinity = std::numeric_limits<float>::infinity();
 const float pi = 3.1415926535f;

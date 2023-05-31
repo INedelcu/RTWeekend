@@ -7,6 +7,7 @@
 #include "Sampling.h"
 #include "Scene.h"
 #include "Sphere.h"
+#include "AABB.h"
 
 // A ray depth of 1 means that only primary rays can intersect geometries and evaluate their materials.
 const int g_MaxRayDepthSolid = 6;
@@ -231,6 +232,12 @@ int main()
 	const int imageWidth = 400;
 	const int imageHeight = 300;
 
+	//shared_ptr<Lambertian> groundMaterial = make_shared<Lambertian>(Color3f(0.5f, 0.5f, 0.5f));
+	//scene.Add(make_shared<Sphere>(groundMaterial, Vector3f(0, 0, -1), 1.0f));
+
+	//shared_ptr<Lambertian> groundMaterial1 = make_shared<Lambertian>(Color3f(1.0f, 0.0f, 0.0f));
+	//scene.Add(make_shared<Sphere>(groundMaterial1, Vector3f(0, 0, -2), 1.0f));
+	
 	shared_ptr<Lambertian> groundMaterial = make_shared<Lambertian>(Color3f(0.5f, 0.5f, 0.5f));
 	scene.Add(make_shared<Sphere>(groundMaterial, Vector3f(0, -1000, 0), 1000.0f));
 	
@@ -274,14 +281,17 @@ int main()
 	shared_ptr<Dielectric> material1 = make_shared<Dielectric>(1.5f);
 	scene.Add(make_shared<Sphere>(material1, Vector3f(0, 1, 0), 1.0f));
 
+	shared_ptr<Metal> material3 = make_shared<Metal>(Color3f(0.7f, 0.6f, 0.5f), 0.0f);
+	scene.Add(make_shared<Sphere>(material3, Vector3f(4, 1, 0), 1.0f));
+	
 	shared_ptr<Lambertian> material2 = make_shared<Lambertian>(Vector3f(0.4f, 0.2f, 0.1f));
 	scene.Add(make_shared<Sphere>(material2, Vector3f(-4, 1, 0), 1.0f));
 
-	shared_ptr<Metal> material3 = make_shared<Metal>(Color3f(0.7f, 0.6f, 0.5f), 0.0f);
-	scene.Add(make_shared<Sphere>(material3, Vector3f(4, 1, 0), 1.0f));
+	scene.BuildAccelerationStructure();
 
 	float vFov = 20.0f;
 	Vector3f lookFrom(13, 2, 3);
+	//Vector3f lookFrom(0, 0, 8);
 	Vector3f lookAt(0, 0, 0);
 	float aspectRatio = float(imageWidth) / float(imageHeight);
 	float aperture = 0.1f;
