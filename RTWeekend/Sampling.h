@@ -7,7 +7,6 @@
 // Z points up (should be aligned with the normal).
 Vector3f CosineWeightedSample(float s, float t)
 {
-	t = std::min(t, 0.9999f);
 	float u = 2 * pi * s;
 	float v = sqrtf(1 - t);
 	return Vector3f(v * cosf(u), v * sinf(u), sqrtf(t));

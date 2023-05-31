@@ -21,10 +21,9 @@ public:
 
 	bool Hit(const RayDesc& rayDesc) const
 	{
-		// A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering, Majercik et al.
-		Vector3f invRayDir = 1.0f / rayDesc.ray.direction;
-		Vector3f t0 = (min - rayDesc.ray.origin) * invRayDir;
-		Vector3f t1 = (max - rayDesc.ray.origin) * invRayDir;
+		// A Ray-Box Intersection Algorithm and Efficient Dynamic Voxel Rendering, Majercik et al.		
+		Vector3f t0 = (min - rayDesc.ray.origin) * rayDesc.ray.invDirection;
+		Vector3f t1 = (max - rayDesc.ray.origin) * rayDesc.ray.invDirection;
 		Vector3f tminv = Min(t0, t1);
 		Vector3f tmaxv = Max(t0, t1);
 		float tmin = FMAX(MaxComponent(tminv), rayDesc.tmin);

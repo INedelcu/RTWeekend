@@ -46,7 +46,8 @@ public:
 			return false;
 
 		// Hit calls update the tmax with the closest hit found during traversal.
-		RayDesc tempRayDesc = rayDesc;
+		RayDesc tempRayDesc = rayDesc;	
+		tempRayDesc.ray.CacheHitHelpers();
 
 		return root->Hit(tempRayDesc, hitDesc);
 #else

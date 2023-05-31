@@ -200,7 +200,7 @@ void RayGenerationShader(int width, int height, int i, int j)
 {
 	Color3f pixelColor(0, 0, 0);
 
-	const uint32_t samplesPerPixel = 512;
+	const uint32_t samplesPerPixel = 256;
 
 	for (uint32_t s = 0; s < samplesPerPixel; s++)
 	{
