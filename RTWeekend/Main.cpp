@@ -1,8 +1,10 @@
 #include <stdio.h>
-#include <time.h>
+#include <atomic>
+
+#include "enkiTS/TaskScheduler.h"
+#include "enkiTS/TaskScheduler_c.h"
 
 #include "RTWeekend.h"
-
 #include "Camera.h"
 #include "Sampling.h"
 #include "Scene.h"
@@ -176,12 +178,13 @@ public:
 	float invIor;
 };
 
-uint64_t g_RayCount = 0;
+thread_local uint64_t g_ThreadRayCount = 0;
+std::atomic_uint64_t g_TotalRayCount = 0;
 
 // Inspired from https://learn.microsoft.com/en-us/windows/win32/direct3d12/traceray-function
 void TraceRay(const Scene& scene, const RayDesc& rayDesc, RayPayload& payload)
 {
-	g_RayCount++;
+	g_ThreadRayCount++;
 
 	HitDesc hitDesc;
 	hitDesc.t = rayDesc.tmax;
@@ -196,7 +199,7 @@ void TraceRay(const Scene& scene, const RayDesc& rayDesc, RayPayload& payload)
 	}
 }
 
-void RayGenerationShader(int width, int height, int i, int j)
+void RayGenerationShader(uint32_t width, uint32_t height, uint32_t i, uint32_t j)
 {
 	Color3f pixelColor(0, 0, 0);
 
@@ -226,10 +229,56 @@ void RayGenerationShader(int width, int height, int i, int j)
 	g_Output[width * (height - j - 1) + i] = pixelColor / samplesPerPixel;
 }
 
+struct DispatchRaysData
+{
+	uint32_t imageWidth;
+	uint32_t imageHeight;
+};
+
+std::atomic_uint32_t g_ImageProgress = 0;
+
+static void DispatchRaysJob(uint32_t start, uint32_t end, uint32_t threadnum, void* data)
+{
+	g_ThreadRayCount = 0;
+
+	DispatchRaysData& dispatchRaysData = *(DispatchRaysData*)data;
+
+	for (uint32_t y = start; y < end; y++)
+	{
+		for (uint32_t x = 0; x < dispatchRaysData.imageWidth; x++)
+		{
+			RayGenerationShader(dispatchRaysData.imageWidth, dispatchRaysData.imageHeight, x, y);
+		}
+	}
+
+	g_TotalRayCount += g_ThreadRayCount;
+	g_ImageProgress += end - start;
+}
+
+struct DisplayProgressJobData
+{
+	uint32_t imageHeight;
+};
+
+static void DisplayProgressJob(uint32_t start, uint32_t end, uint32_t threadnum, void* data)
+{
+	const DisplayProgressJobData& jobData = *(const DisplayProgressJobData*)data;
+
+	while (g_ImageProgress.load() != jobData.imageHeight)
+	{
+		printf("\rPath tracing progress: %d%%", (int)(100 * g_ImageProgress.load() / (float)jobData.imageHeight));
+
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(100ms);
+	}
+
+	printf("\rPath tracing progress: 100%%");
+}
+
 int main()
 {
-	const int imageWidth = 400;
-	const int imageHeight = 300;
+	const uint32_t imageWidth = 400;
+	const uint32_t imageHeight = 300;
 	
 	shared_ptr<Lambertian> groundMaterial = make_shared<Lambertian>(Color3f(0.5f, 0.5f, 0.5f));
 	scene.Add(make_shared<Sphere>(groundMaterial, Vector3f(0, -1000, 0), 1000.0f));
@@ -302,34 +351,34 @@ int main()
 
 	printf("Generating output image.\n");
 
+	DispatchRaysData dispatchRaysData;
+	dispatchRaysData.imageWidth = imageWidth;
+	dispatchRaysData.imageHeight = imageHeight;
+
 	clock_t t0 = clock();
 
-	for (int j = 0; j < imageHeight; j++)
-	{
-		clock_t start = clock();
-		uint64_t rayCountStart = g_RayCount;
+	enkiTaskScheduler* taskScheduler = enkiNewTaskScheduler();
+	enkiInitTaskScheduler(taskScheduler);
 
-		for (int i = 0; i < imageWidth; i++)
-		{
-			RayGenerationShader(imageWidth, imageHeight, i, j);
-		}
+	DisplayProgressJobData displayProgressJobData;
+	displayProgressJobData.imageHeight = imageHeight;
 
-		uint64_t rayCountEnd = g_RayCount;
-		clock_t end = clock();
+	enkiTaskSet* taskProgress = enkiCreateTaskSet(taskScheduler, DisplayProgressJob);
+	enkiSetArgsTaskSet(taskProgress, &displayProgressJobData);
+	enkiAddTaskSet(taskScheduler, taskProgress);
 
-		float deltaT = (float)(end - start) / CLOCKS_PER_SEC;
-		uint64_t rayCount = rayCountEnd - rayCountStart;
+	enkiTaskSet* taskDispatchRays = enkiCreateTaskSet(taskScheduler, DispatchRaysJob);
+	enkiAddTaskSetMinRange(taskScheduler, taskDispatchRays, &dispatchRaysData, imageHeight, 8);
+	enkiWaitForTaskSet(taskScheduler, taskDispatchRays);
 
-		printf("\rScanlines remaining: %d - Path tracing at: %.2f MRays/sec.  ", imageHeight - j - 1, (float(rayCount) / 1000000.0f) / deltaT);
-	}
+	enkiDeleteTaskSet(taskScheduler, taskDispatchRays);
+	enkiDeleteTaskSet(taskScheduler, taskProgress);
 
-	clock_t t1 = clock();
+	enkiDeleteTaskScheduler(taskScheduler);
 
-	float deltaT = float(t1 - t0) / CLOCKS_PER_SEC;
+	float deltaT = float(clock() - t0) / CLOCKS_PER_SEC;
 
-	printf("\nTime to generate image: %.2f seconds. Total rays: %I64u. Average path tracing speed: %.2f MRays/sec.\n", deltaT, g_RayCount, (float)g_RayCount / (deltaT * 1000000));
-
-	printf("Writing output image to Image.ppm.\n");
+	printf("\nTime to generate image: %.2f seconds. Total rays: %I64u. Average path tracing speed: %.2f MRays/sec.\n", deltaT, g_TotalRayCount.load(), (double)g_TotalRayCount.load() / (deltaT * 1000000));
 
 	WritePPM(g_Output, imageWidth, imageHeight);
 

@@ -27,7 +27,7 @@ inline float DegreesToRadians(float degrees)
 	return degrees * pi / 180.0f;
 }
 
-uint32_t s_RndState = 0x5a2456fd;
+thread_local uint32_t s_RndState = 0x5a2456fd;
 static uint32_t XorShift32()
 {
 	uint32_t x = s_RndState;
