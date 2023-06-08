@@ -14,7 +14,7 @@ struct HitDesc
 		normal = frontFace ? outwardNormal : -outwardNormal;
 	}
 
-	shared_ptr<Material> material;
+	Material* material;
 	Vector3f position;
 	Vector3f normal;
 	float t;

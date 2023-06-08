@@ -44,7 +44,7 @@ public:
 		hitDesc.position = rayDesc.ray.At(root);
 		Vector3f outwardNormal = (hitDesc.position - center) * invRadius;				
 		hitDesc.SetFaceNormal(rayDesc.ray, outwardNormal);
-		hitDesc.material = material;
+		hitDesc.material = material.get();
 
 		return true;
 	}
