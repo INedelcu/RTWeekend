@@ -368,7 +368,7 @@ int main()
 	enkiAddTaskSet(taskScheduler, taskProgress);
 
 	enkiTaskSet* taskDispatchRays = enkiCreateTaskSet(taskScheduler, DispatchRaysJob);
-	enkiAddTaskSetMinRange(taskScheduler, taskDispatchRays, &dispatchRaysData, imageHeight, 8);
+	enkiAddTaskSetMinRange(taskScheduler, taskDispatchRays, &dispatchRaysData, imageHeight, 1);
 	enkiWaitForTaskSet(taskScheduler, taskDispatchRays);
 
 	enkiDeleteTaskSet(taskScheduler, taskDispatchRays);
