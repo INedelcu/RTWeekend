@@ -9,6 +9,7 @@
 #include "Sampling.h"
 #include "Scene.h"
 #include "Sphere.h"
+#include "Texture.h"
 #include "AABB.h"
 
 // A ray depth of 1 means that only primary rays can intersect geometries and evaluate their materials.
@@ -41,10 +42,8 @@ void MissShader(const RayDesc& rayDesc, RayPayload& payload)
 class Lambertian : public Material
 {
 public:
-	Lambertian(const Color3f& albedo)
-	{
-		this->albedo = albedo;
-	}
+	Lambertian(const Color3f& c) : albedo(make_shared<SolidColorTexture>(c)) {}
+	Lambertian(shared_ptr<Texture> tex) : albedo(tex) {}
 
     void ClosestHitShader(const Scene& scene, const RayDesc& rayDesc, const HitDesc& hitDesc, RayPayload& payload) const override
 	{
@@ -71,11 +70,11 @@ public:
 
 		TraceRay(scene, newRay, newRayPayload);
 
-		payload.color *= albedo * newRayPayload.color;
+		payload.color *= albedo->Sample(hitDesc.u, hitDesc.v, hitDesc.position) * newRayPayload.color;
 	}
 
 public:
-	Color3f albedo;
+	shared_ptr<Texture> albedo;
 };
 
 class Metal : public Material
@@ -203,7 +202,7 @@ void RayGenerationShader(uint32_t width, uint32_t height, uint32_t i, uint32_t j
 {
 	Color3f pixelColor(0, 0, 0);
 
-	const uint32_t samplesPerPixel = 256;
+	const uint32_t samplesPerPixel = 1024;
 
 	for (uint32_t s = 0; s < samplesPerPixel; s++)
 	{
@@ -277,10 +276,11 @@ static void DisplayProgressJob(uint32_t start, uint32_t end, uint32_t threadnum,
 
 int main()
 {
-	const uint32_t imageWidth = 400;
-	const uint32_t imageHeight = 300;
+	const uint32_t imageWidth = 1280;
+	const uint32_t imageHeight = 720;
 	
-	shared_ptr<Lambertian> groundMaterial = make_shared<Lambertian>(Color3f(0.5f, 0.5f, 0.5f));
+	shared_ptr<Texture> checker = make_shared<CheckerTexture>(Color3f(0.2f, 0.3f, 0.1f), Color3f(0.9f, 0.9f, 0.9f));
+	shared_ptr<Lambertian> groundMaterial = make_shared<Lambertian>(checker);
 	scene.Add(make_shared<Sphere>(groundMaterial, Vector3f(0, -1000, 0), 1000.0f));
 	
 	for (int a = -11; a < 11; a++) 
@@ -369,22 +369,24 @@ int main()
 
 	enkiTaskSet* taskDispatchRays = enkiCreateTaskSet(taskScheduler, DispatchRaysJob);
 	enkiAddTaskSetMinRange(taskScheduler, taskDispatchRays, &dispatchRaysData, imageHeight, 1);
+
 	enkiWaitForTaskSet(taskScheduler, taskDispatchRays);
+	enkiWaitForTaskSet(taskScheduler, taskProgress);
+
+	float deltaT = float(clock() - t0) / CLOCKS_PER_SEC;
+
+	printf("\nDone!\n");
 
 	enkiDeleteTaskSet(taskScheduler, taskDispatchRays);
 	enkiDeleteTaskSet(taskScheduler, taskProgress);
 
-	enkiDeleteTaskScheduler(taskScheduler);
+	enkiDeleteTaskScheduler(taskScheduler);	
 
-	float deltaT = float(clock() - t0) / CLOCKS_PER_SEC;
-
-	printf("\nTime to generate image: %.2f seconds. Total rays: %I64u. Average path tracing speed: %.2f MRays/sec.\n", deltaT, g_TotalRayCount.load(), (double)g_TotalRayCount.load() / (deltaT * 1000000));
+	printf("Time to generate image: %.2f seconds. Total rays: %I64u. Average path tracing speed: %.2f MRays/sec.\n", deltaT, g_TotalRayCount.load(), (double)g_TotalRayCount.load() / (deltaT * 1000000));
 
 	WritePPM(g_Output, imageWidth, imageHeight);
 
 	delete[] g_Output;
-
-	printf("Done\n");
 
 	return 0;
 }

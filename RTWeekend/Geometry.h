@@ -17,6 +17,8 @@ struct HitDesc
 	Material* material;
 	Vector3f position;
 	Vector3f normal;
+	float u;
+	float v;
 	float t;
 	bool frontFace;
 };
