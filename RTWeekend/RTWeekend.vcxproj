@@ -148,7 +148,9 @@
     <ClInclude Include="enkiTS\TaskScheduler_c.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="Materials.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="RayPayload.h" />
     <ClInclude Include="RTWeekend.h" />
     <ClInclude Include="Sampling.h" />
     <ClInclude Include="Scene.h" />

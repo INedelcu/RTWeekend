@@ -77,8 +77,20 @@ inline float Clamp(float x, float min, float max)
 	return x;
 }
 
-#include "Vector3f.h"
+// A ray depth of 1 means that only primary rays can intersect geometries and evaluate their materials.
+const int g_MaxRayDepthSolid = 6;
+const int g_MaxRayDepthTransparent = 10;
+
+const float g_TMin = 0.001f;
+const float g_TMax = 100000.0f;
+
 #include "Color3f.h"
+#include "Geometry.h"
 #include "Ray.h"
+#include "RayPayload.h"
+#include "Scene.h"
+#include "Vector3f.h"
+
+void TraceRay(const Scene& scene, const RayDesc& rayDesc, RayPayload& payload);
 
 #endif
