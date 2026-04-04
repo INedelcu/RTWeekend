@@ -4,7 +4,7 @@
 #include "Geometry.h"
 #include "Scene.h"
 
-inline bool BoxCompare(const shared_ptr<Geometry> a, const shared_ptr<Geometry> b, int axis)
+inline bool BoxCompare(const shared_ptr<Geometry>& a, const shared_ptr<Geometry>& b, int axis)
 {
 	AABB boxA;
 	AABB boxB;
@@ -18,17 +18,17 @@ inline bool BoxCompare(const shared_ptr<Geometry> a, const shared_ptr<Geometry> 
 	return minAvec[axis] < minBvec[axis];
 }
 
-bool BoxCompareX(const shared_ptr<Geometry> a, const shared_ptr<Geometry> b)
+bool BoxCompareX(const shared_ptr<Geometry>& a, const shared_ptr<Geometry>& b)
 {
 	return BoxCompare(a, b, 0);
 }
 
-bool BoxCompareY(const shared_ptr<Geometry> a, const shared_ptr<Geometry> b)
+bool BoxCompareY(const shared_ptr<Geometry>& a, const shared_ptr<Geometry>& b)
 {
 	return BoxCompare(a, b, 1);
 }
 
-bool BoxCompareZ(const shared_ptr<Geometry> a, const shared_ptr<Geometry> b)
+bool BoxCompareZ(const shared_ptr<Geometry>& a, const shared_ptr<Geometry>& b)
 {
 	return BoxCompare(a, b, 2);
 }
@@ -57,8 +57,6 @@ public:
 		if (geometries.size() == 0)
 			return;
 
-		auto tempGeometries = geometries; // Create a modifiable array of the source scene objects
-
 		int axis = RandomInt(0, 2);
 
 		auto comparator = (axis == 0) ? BoxCompareX
@@ -68,7 +66,7 @@ public:
 		size_t count = end - start;
 		if (count == 1)
 		{
-			data.geometry = tempGeometries[start];
+			data.geometry = geometries[start];
 			if (data.geometry)
 			{
 				data.geometry->GetBoundingBox(data.aabb);
@@ -77,24 +75,24 @@ public:
 		}
 		else if (count == 2)
 		{
-			if (comparator(tempGeometries[start], tempGeometries[start + 1]))
+			if (comparator(geometries[start], geometries[start + 1]))
 			{
-				left = make_unique<BVHNode>(tempGeometries, start, start + 1);
-				right = make_unique<BVHNode>(tempGeometries, start + 1, start + 2);
+				left = make_unique<BVHNode>(geometries, start, start + 1);
+				right = make_unique<BVHNode>(geometries, start + 1, start + 2);
 			}
 			else
 			{
-				right = make_unique<BVHNode>(tempGeometries, start, start + 1);
-				left = make_unique<BVHNode>(tempGeometries, start + 1, start + 2);
+				right = make_unique<BVHNode>(geometries, start, start + 1);
+				left = make_unique<BVHNode>(geometries, start + 1, start + 2);
 			}
 		}
 		else
 		{
-			std::sort(tempGeometries.begin() + start, tempGeometries.begin() + end, comparator);
+			std::sort(geometries.begin() + start, geometries.begin() + end, comparator);
 
 			size_t mid = start + count / 2;
-			left = make_unique<BVHNode>(tempGeometries, start, mid);
-			right = make_unique<BVHNode>(tempGeometries, mid, end);
+			left = make_unique<BVHNode>(geometries, start, mid);
+			right = make_unique<BVHNode>(geometries, mid, end);
 		}
 
 
@@ -130,7 +128,13 @@ public:
 
 	inline bool Hit(RayDesc& rayDesc, HitDesc& hitDesc) const
 	{
-		if (data.aabb.Hit(rayDesc))
+		const Vector3f invDirection = 1.0f / rayDesc.ray.direction;
+		return HitRecursive(rayDesc, hitDesc, invDirection);
+	}
+
+	inline bool HitRecursive(RayDesc& rayDesc, HitDesc& hitDesc, const Vector3f& invDirection) const
+	{
+		if (data.aabb.Hit(rayDesc, invDirection))
 		{
 			if (data.geometry)
 			{
@@ -144,8 +148,8 @@ public:
 			}
 			else
 			{
-				bool hitLeft = left->Hit(rayDesc, hitDesc);
-				bool hitRight = right->Hit(rayDesc, hitDesc);
+				bool hitLeft = left->HitRecursive(rayDesc, hitDesc, invDirection);
+				bool hitRight = right->HitRecursive(rayDesc, hitDesc, invDirection);
 
 				return hitLeft || hitRight;
 			}

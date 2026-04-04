@@ -4,7 +4,9 @@
 // Things that made it fast:
 // - custom random function for [0, 1]
 // - caching radius^2 and 1 / radius of the sphere.
-// - aligning Vector3f to 16 bytes using declspec
+// - aligning Vector3f to 16 bytes using alignas(16)
+// - precomputing invDirection once per ray for all AABB tests during BVH traversal
+// - per-thread RNG seeding to avoid correlated samples across threads
 
 #include <algorithm>
 #include <cmath>
@@ -72,9 +74,7 @@ inline Vector3f RandomInUnitDisc()
 
 inline float Clamp(float x, float min, float max)
 {
-	if (x < min) return min;
-	if (x > max) return max;
-	return x;
+	return std::fmin(std::fmax(x, min), max);
 }
 
 // A ray depth of 1 means that only primary rays can intersect geometries and evaluate their materials.
