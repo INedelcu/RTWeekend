@@ -4,7 +4,8 @@
 // Things that made it fast:
 // - custom random function for [0, 1]
 // - caching radius^2 and 1 / radius of the sphere.
-// - aligning Vector3f to 16 bytes using alignas(16)
+// - aligning Vector3f to 16 bytes using alignas(16); on modern CPUs unaligned SIMD is often similar
+//   when accesses stay within a cache line, but alignment still helps avoid split-load/store penalties
 // - precomputing invDirection once per ray for all AABB tests during BVH traversal
 // - per-thread RNG seeding to avoid correlated samples across threads
 
