@@ -88,6 +88,10 @@ std::atomic_uint32_t g_ImageProgress = 0;
 
 static void DispatchRaysJob(uint32_t start, uint32_t end, uint32_t threadnum, void* data)
 {
+	// Seed the per-thread RNG with a unique value so different threads produce
+	// uncorrelated sample sequences and avoid visible banding in the output.
+	s_RndState = 0x5a2456fd ^ (threadnum + 1) * 2654435761u;
+
 	g_ThreadRayCount = 0;
 
 	DispatchRaysData& dispatchRaysData = *(DispatchRaysData*)data;

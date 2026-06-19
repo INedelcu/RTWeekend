@@ -6,7 +6,7 @@
 #define FMIN(a, b) ((a < b) ? (a) : (b))
 #define FMAX(a, b) ((a > b) ? (a) : (b))
 
-class Vector3f
+class alignas(16) Vector3f
 {
 public:
 	Vector3f() 
